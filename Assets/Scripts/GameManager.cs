@@ -105,13 +105,26 @@ public class GameManager : MonoBehaviour
 
         ShowMessage(msg);
 
-        if (levelTransitionParticles != null)
-            levelTransitionParticles.Play();
+        // --- Instanciar sistema de partículas ---
+        if (levelTransitionParticlesPrefab != null)
+        {
+            // Instancia el prefab y lo mantiene visible incluso si Time.timeScale = 0
+            GameObject fx = Instantiate(levelTransitionParticlesPrefab, Vector3.zero, Quaternion.identity);
+
+            var ps = fx.GetComponent<ParticleSystem>();
+            if (ps != null)
+            {
+                var main = ps.main;
+                main.simulationSpeed = 1f;
+                main.useUnscaledTime = true; 
+                ps.Play();
+            }
+
+            Destroy(fx, transitionDuration + 1f); 
+        }
 
         yield return new WaitForSecondsRealtime(transitionDuration);
 
-        if (levelTransitionParticles != null)
-            levelTransitionParticles.Stop();
 
         HideMessage();
 

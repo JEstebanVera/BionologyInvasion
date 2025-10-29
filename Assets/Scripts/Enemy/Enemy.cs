@@ -193,9 +193,12 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
-        
+        // Instanciar y destruir automáticamente el efecto
         if (deathEffectPrefab != null)
-            Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+        {
+            GameObject fx = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
+            Destroy(fx, 3f); // destruye la instancia del efecto tras unos segundos
+        }
 
         // Soltar pickup correcto si aplica
         if (containsPickup)
@@ -216,6 +219,15 @@ public class Enemy : MonoBehaviour
         }
 
         GameManager.Instance.AddScore(10);
+
+        if (spawner != null)
+            spawner.RemoveEnemy(gameObject);
+
+        Destroy(gameObject);
+    }
+
+
+    GameManager.Instance.AddScore(10);
 
         if (spawner != null)
             spawner.RemoveEnemy(gameObject);
