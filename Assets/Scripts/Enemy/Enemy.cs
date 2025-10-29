@@ -226,13 +226,5 @@ public class Enemy : MonoBehaviour
         Destroy(gameObject);
     }
 
-
-    GameManager.Instance.AddScore(10);
-
-        if (spawner != null)
-            spawner.RemoveEnemy(gameObject);
-
-        Destroy(gameObject);
-    }
 }
 
