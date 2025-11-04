@@ -10,8 +10,13 @@ public class Enemy : MonoBehaviour
 
     
     [Header("Efectos")]
-    public GameObject deathEffectPrefab;             // prefab de partículas al morir (puede contener varios sistemas)
+    public GameObject deathEffectPrefab;             // prefab de partículas al morir 
     public GameObject specialPickupEffectPrefab;     // prefab de partículas verdes si tiene pickup
+
+    [Header("Sonido")]
+    public AudioClip deathSound;           // Sonido de muerte
+    private AudioSource audioSource;       // Fuente de audio propia
+
 
     [Header("Pickups")]
     public GameObject weaponPickupChargePrefab;   // prefab del pickup "Cargado" (weaponId = 2)
@@ -45,6 +50,13 @@ public class Enemy : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         animator = GetComponent<Animator>();
         currentHealth = maxHealth;
+
+        // Asegurar que el enemigo tenga un AudioSource
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
     }
 
     private void Start()
@@ -193,6 +205,11 @@ public class Enemy : MonoBehaviour
 
     private void Die()
     {
+        if (deathSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(deathSound);
+        }
+
         // Instanciar y destruir automáticamente el efecto
         if (deathEffectPrefab != null)
         {
@@ -223,7 +240,7 @@ public class Enemy : MonoBehaviour
         if (spawner != null)
             spawner.RemoveEnemy(gameObject);
 
-        Destroy(gameObject);
+        Destroy(gameObject, deathSound != null ? deathSound.length : 0f);
     }
 
 }

@@ -7896,7 +7896,7 @@ MonoBehaviour:
   fondoNivel2: {fileID: 0}
   fondoNivel3: {fileID: 0}
   spawner: {fileID: 96677196}
-  levelTransitionParticles: {fileID: 8712094940234150767, guid: 866d9ee77d785e2409b36187178996b6, type: 3}
+  levelTransitionParticlesPrefab: {fileID: 842643085128333204, guid: 866d9ee77d785e2409b36187178996b6, type: 3}
   transitionDuration: 5
 --- !u!4 &739246764
 Transform:
@@ -22466,6 +22466,9 @@ MonoBehaviour:
   chargeOrb: {fileID: 2144370817}
   maxOrbScale: {x: 1, y: 1, z: 1}
   chargedColor: {r: 1, g: 0, b: 0, a: 1}
+  basicShootSound: {fileID: 0}
+  chargedShootSound: {fileID: 0}
+  multiShootSound: {fileID: 0}
   hudManager: {fileID: 1634911051}
 --- !u!114 &1960785015
 MonoBehaviour:

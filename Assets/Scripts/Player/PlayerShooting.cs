@@ -25,6 +25,13 @@ public class PlayerShooting : MonoBehaviour
     private Renderer orbRenderer;
     private Color baseOrbColor;
 
+    [Header("Sonidos de Disparo")]
+    public AudioClip basicShootSound;      // Sonido del disparo básico
+    public AudioClip chargedShootSound;    // Sonido del disparo cargado
+    public AudioClip multiShootSound;      // Sonido del disparo múltiple
+    private AudioSource audioSource;       // Fuente de audio
+
+
     public HUDManager hudManager;
     private enum WeaponType { Basic, Charged, Multi }
     private WeaponType currentWeapon = WeaponType.Basic;
@@ -43,6 +50,14 @@ public class PlayerShooting : MonoBehaviour
             baseOrbColor = orbRenderer.material.color;
             chargeOrb.localScale = initialOrbScale; // oculto al inicio
         }
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+
+        audioSource.playOnAwake = false;
+        audioSource.spatialBlend = 0f; 
+
     }
 
     private void Update()
@@ -80,7 +95,10 @@ public class PlayerShooting : MonoBehaviour
         {
             case WeaponType.Basic:
                 if (Input.GetMouseButtonDown(0))
+                {
                     ShootBullet(basicBulletPrefab, firePoint, Vector3.up);
+                    PlaySound(basicShootSound);
+                }
                 break;
 
             case WeaponType.Charged:
@@ -90,10 +108,9 @@ public class PlayerShooting : MonoBehaviour
 
                     if (chargeTimer >= chargeTime)
                     {
-                        // Disparo cargado
                         ShootBullet(chargedBulletPrefab, firePoint, Vector3.up);
+                        PlaySound(chargedShootSound);
 
-                        // Reset para permitir un nuevo ciclo sin soltar el click
                         chargeTimer = 0f;
                         isCharging = false;
                         chargeOrb.localScale = Vector3.zero;
@@ -105,8 +122,6 @@ public class PlayerShooting : MonoBehaviour
                 {
                     chargeTimer = 0f;
                     isCharging = false;
-
-                    // Reset visual
                     chargeOrb.localScale = Vector3.zero;
                     orbRenderer.material.color = baseOrbColor;
                 }
@@ -118,10 +133,12 @@ public class PlayerShooting : MonoBehaviour
                     ShootBullet(basicBulletPrefab, firePoint, Vector3.up);
                     ShootBullet(basicBulletPrefab, leftPoint, new Vector3(-0.5f, 1f, 0f).normalized);
                     ShootBullet(basicBulletPrefab, rightPoint, new Vector3(0.5f, 1f, 0f).normalized);
+                    PlaySound(multiShootSound);
                 }
                 break;
         }
     }
+
 
     private void UpdateChargeOrb()
     {
@@ -174,6 +191,13 @@ public class PlayerShooting : MonoBehaviour
         if (weaponId == 3) return unlockedWeapons.Contains(WeaponType.Multi);
         return false;
     }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (clip != null && audioSource != null)
+            audioSource.PlayOneShot(clip);
+    }
+
 
 }
 

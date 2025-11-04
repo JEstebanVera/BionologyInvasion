@@ -25,8 +25,9 @@ public class GameManager : MonoBehaviour
     public EnemySpawner spawner;
 
     [Header("Transición de Niveles")]
-    public ParticleSystem levelTransitionParticles;
+    public GameObject levelTransitionParticlesPrefab;  
     public float transitionDuration = 5f;
+
 
     // --- CONTROL INTERNO ---
     private int currentLevel = 1;
