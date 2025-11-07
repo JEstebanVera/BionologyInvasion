@@ -133,6 +133,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WeaponPickup
   weaponId: 3
   fallSpeed: 0.5
+  pickupSound: {fileID: 8300000, guid: da186451a53febe48a378e323bd44536, type: 3}
 --- !u!65 &4832089890559593850
 BoxCollider:
   m_ObjectHideFlags: 0

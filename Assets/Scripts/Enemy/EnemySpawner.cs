@@ -33,7 +33,9 @@ public class EnemySpawner : MonoBehaviour
 
     private void Update()
     {
-        // ya tienes lógica de spawn, añade esto dentro del Update:
+        // Limpia enemigos destruidos
+        activeEnemies.RemoveAll(e => e == null);
+
         moveDownTimer += Time.deltaTime;
 
         if (moveDownTimer >= moveDownInterval)
@@ -43,22 +45,23 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
+
     private void MoveAllEnemiesDown()
     {
         if (activeEnemies.Count == 0) return;
 
         foreach (GameObject enemyObj in activeEnemies)
         {
-            if (enemyObj != null)
+            if (enemyObj == null) continue;
+
+            Enemy enemy = enemyObj.GetComponent<Enemy>();
+            if (enemy != null && enemy.gameObject != null)
             {
-                Enemy enemy = enemyObj.GetComponent<Enemy>();
-                if (enemy != null)
-                {
-                    enemy.MoveDown();
-                }
+                enemy.MoveDown();
             }
         }
     }
+
 
     private IEnumerator SpawnRoutine()
     {
@@ -130,20 +133,27 @@ public class EnemySpawner : MonoBehaviour
 
         while (elapsed < animationDuration)
         {
+            if (enemy == null) yield break; // Si fue destruido, salir seguro
             enemy.transform.position = Vector3.Lerp(start, targetPos, elapsed / animationDuration);
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        enemy.transform.position = targetPos;
+        if (enemy != null)
+            enemy.transform.position = targetPos;
     }
+
 
     private IEnumerator ActivateAfterDelay(Enemy enemyScript, Vector3 finalPosition)
     {
         yield return new WaitForSeconds(animationDuration);
+
+        if (enemyScript == null || enemyScript.gameObject == null) yield break;
+
         enemyScript.transform.position = finalPosition;
         enemyScript.SetActiveBehavior(true);
     }
+
 
     private Vector3 GetRandomPointInside(BoxCollider col)
     {

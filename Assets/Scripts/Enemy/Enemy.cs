@@ -13,10 +13,10 @@ public class Enemy : MonoBehaviour
     public GameObject deathEffectPrefab;             // prefab de partículas al morir 
     public GameObject specialPickupEffectPrefab;     // prefab de partículas verdes si tiene pickup
 
-    [Header("Sonido")]
-    public AudioClip deathSound;           // Sonido de muerte
-    private AudioSource audioSource;       // Fuente de audio propia
-
+    [Header("Sonidos")]
+    public AudioClip deathSound;        // Sonido de muerte
+    public AudioClip shootSound;        // Sonido al disparar
+    private AudioSource audioSource;    // Fuente de audio propia
 
     [Header("Pickups")]
     public GameObject weaponPickupChargePrefab;   // prefab del pickup "Cargado" (weaponId = 2)
@@ -40,6 +40,8 @@ public class Enemy : MonoBehaviour
     private int currentAreaIndex;
     private bool isActive = false;
     private bool movingRight = true;
+    private bool isDead = false;
+
 
     private Coroutine shootingCoroutine;
     private BoxCollider currentArea;  // área actual
@@ -159,6 +161,13 @@ public class Enemy : MonoBehaviour
         }
 
         Destroy(bullet, 3f);
+
+        // Sonidos
+        if (shootSound != null && audioSource != null)
+        {
+            audioSource.PlayOneShot(shootSound);
+        }
+
     }
 
     public void MoveDown()
@@ -199,12 +208,23 @@ public class Enemy : MonoBehaviour
 
     public void TakeDamage(int dmg)
     {
+        if (isDead) return;
+
         currentHealth -= dmg;
-        if (currentHealth <= 0) Die();
+        if (currentHealth <= 0)
+            Die();
     }
+
 
     private void Die()
     {
+        if (isDead) return; // Evita doble ejecución
+        isDead = true;      //  Marca como muerto
+
+        //Desactiva el collider y movimiento para que no siga interactuando
+        Collider col = GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+        isActive = false; // Detiene comportamiento
         if (deathSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(deathSound);

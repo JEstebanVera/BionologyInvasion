@@ -5,6 +5,9 @@ public class WeaponPickup : MonoBehaviour
     public int weaponId; // 2 = cargado, 3 = múltiple
     public float fallSpeed = 1f; // velocidad en la que cae
 
+    [Header("Sonido")]
+    public AudioClip pickupSound;
+
     private void Start()
     {
         Destroy(gameObject, 5f); // destruir si no se recoge en 5 segundos
@@ -20,6 +23,13 @@ public class WeaponPickup : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             other.GetComponent<PlayerShooting>().UnlockWeapon(weaponId);
+
+            // Reproducir sonido de pickup
+            if (pickupSound != null)
+            {
+                AudioSource.PlayClipAtPoint(pickupSound, transform.position);
+            }
+
             Destroy(gameObject);
         }
     }
