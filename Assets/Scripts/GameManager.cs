@@ -101,7 +101,7 @@ public class GameManager : MonoBehaviour
         {
             case 1: msg = "¡Nivel 2! Más enemigos"; break;
             case 2: msg = "¡Nivel 3! Invasión intensa"; break;
-            case 3: msg = "¡Victoria! Final del juego"; break;
+            case 3: msg = "¡Victoria! Invasion detenida"; break;
         }
 
         ShowMessage(msg);
@@ -153,11 +153,23 @@ public class GameManager : MonoBehaviour
     private IEnumerator EndGameRoutine()
     {
         PauseGame(true);
-        ShowMessage("¡Victoria! Final del juego");
-        yield return new WaitForSecondsRealtime(2.5f);
+        ShowMessage("¡Victoria! Has completado el juego");
+
+        yield return new WaitForSecondsRealtime(3f); // panel visible 3 segundos
+
+        HideMessage();
         PauseGame(false);
-        GoToGameOver();
+        LoadCreditsScene();
     }
+
+    private void LoadCreditsScene()
+    {
+        Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        SceneManager.LoadScene("Credits");
+    }
+
 
     private void SetFondo(int level)
     {
@@ -213,6 +225,14 @@ public class GameManager : MonoBehaviour
         }
         return count < 3;
     }
+
+    public bool PlayerHasAllWeapons()
+    {
+        PlayerShooting player = FindObjectOfType<PlayerShooting>();
+        if (player == null) return false;
+        return player.HasAllWeapons(); 
+    }
+
 
     public void GameOver()
     {

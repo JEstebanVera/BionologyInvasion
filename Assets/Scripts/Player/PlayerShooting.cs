@@ -184,6 +184,7 @@ public class PlayerShooting : MonoBehaviour
         }
     }
 
+
     // Devuelve si el jugador ya desbloqueó la arma con id (2 o 3)
     public bool HasUnlockedWeapon(int weaponId)
     {
@@ -191,6 +192,14 @@ public class PlayerShooting : MonoBehaviour
         if (weaponId == 3) return unlockedWeapons.Contains(WeaponType.Multi);
         return false;
     }
+
+    public bool HasAllWeapons()
+    {
+        // Asumiendo que 1 = básico, 2 = cargado, 3 = múltiple
+        // y que los manejas en un array o banderas
+        return unlockedWeapons.Contains(WeaponType.Charged) && unlockedWeapons.Contains(WeaponType.Multi);
+    }
+
 
     private void PlaySound(AudioClip clip)
     {

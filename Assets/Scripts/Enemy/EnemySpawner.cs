@@ -169,10 +169,14 @@ public class EnemySpawner : MonoBehaviour
 
     private bool ShouldSpawnSpecialEnemy()
     {
-        // Usa la probabilidad configurable desde el inspector
+        // No generar pickups si el jugador ya tiene todas las armas
+        if (gameManager != null && gameManager.PlayerHasAllWeapons())
+            return false;
+
         float chance = Random.value;
         return chance <= specialEnemyChance && (gameManager == null || gameManager.CanSpawnSpecialEnemy());
     }
+
 
 
     private int FindAreaIndex(BoxCollider area)
