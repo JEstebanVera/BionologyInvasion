@@ -21,19 +21,21 @@ public class EnemySpawner : MonoBehaviour
 
     [Header("Probabilidad de Enemigos Especiales")]
     [Range(0f, 1f)]
-    public float specialEnemyChance = 0.15f; 
+    public float specialEnemyChance = 0.15f;
 
-
-
+    private PlayerShooting player;
 
     private void Start()
     {
         StartCoroutine(SpawnRoutine());
+
+        player = FindObjectOfType<PlayerShooting>();
+
     }
 
     private void Update()
     {
-        // Limpia enemigos destruidos
+        // Limpia enemigos destruidos (remueve referencias null)
         activeEnemies.RemoveAll(e => e == null);
 
         moveDownTimer += Time.deltaTime;
@@ -45,23 +47,23 @@ public class EnemySpawner : MonoBehaviour
         }
     }
 
-
     private void MoveAllEnemiesDown()
     {
         if (activeEnemies.Count == 0) return;
 
-        foreach (GameObject enemyObj in activeEnemies)
+        // Hacemos una copia de la lista para evitar problemas si se modifica durante iteración
+        var copy = new List<GameObject>(activeEnemies);
+        foreach (GameObject enemyObj in copy)
         {
             if (enemyObj == null) continue;
 
             Enemy enemy = enemyObj.GetComponent<Enemy>();
-            if (enemy != null && enemy.gameObject != null)
+            if (enemy != null)
             {
                 enemy.MoveDown();
             }
         }
     }
-
 
     private IEnumerator SpawnRoutine()
     {
@@ -69,6 +71,9 @@ public class EnemySpawner : MonoBehaviour
 
         while (spawning)
         {
+            // Limpieza preventiva
+            activeEnemies.RemoveAll(e => e == null);
+
             if (activeEnemies.Count < maxEnemiesPerWave)
             {
                 SpawnEnemy();
@@ -86,7 +91,7 @@ public class EnemySpawner : MonoBehaviour
     {
         if (enemyPrefab == null || spawnAreas.Length == 0) return;
 
-        // Área aleatoria (normalmente la superior)
+        // Actual: spawnear siempre desde el área superior (index 0)
         BoxCollider area = spawnAreas[0];
 
         // Posición final dentro del área
@@ -100,15 +105,21 @@ public class EnemySpawner : MonoBehaviour
 
         // Configurar enemigo
         Enemy enemyScript = newEnemy.GetComponent<Enemy>();
-        enemyScript.Initialize(this);
-        enemyScript.AssignCurrentArea(FindAreaIndex(area));
-        enemyScript.SetActiveBehavior(false);
+        if (enemyScript != null)
+        {
+            enemyScript.Initialize(this);
+            enemyScript.AssignCurrentArea(FindAreaIndex(area));
+            enemyScript.SetActiveBehavior(false);
+        }
 
         // Determinar si este enemigo tendrá pickup especial
         if (ShouldSpawnSpecialEnemy())
         {
-            enemyScript.containsPickup = true;
-            enemyScript.pickupWeaponId = Random.value < 0.5f ? 2 : 3; // 50% de probabilidad entre 2 o 3
+            if (enemyScript != null)
+            {
+                enemyScript.containsPickup = true;
+                enemyScript.pickupWeaponId = Random.value < 0.5f ? 2 : 3; // elegir 2 o 3
+            }
         }
 
         // Animación de vuelo o trigger de animador
@@ -123,11 +134,14 @@ public class EnemySpawner : MonoBehaviour
         }
 
         // Activar comportamiento tras animación
-        StartCoroutine(ActivateAfterDelay(enemyScript, finalPosition));
+        if (enemyScript != null)
+            StartCoroutine(ActivateAfterDelay(enemyScript, finalPosition));
     }
 
     private IEnumerator FlyInRoutine(GameObject enemy, Vector3 targetPos)
     {
+        if (enemy == null) yield break;
+
         Vector3 start = enemy.transform.position;
         float elapsed = 0f;
 
@@ -143,17 +157,19 @@ public class EnemySpawner : MonoBehaviour
             enemy.transform.position = targetPos;
     }
 
-
     private IEnumerator ActivateAfterDelay(Enemy enemyScript, Vector3 finalPosition)
     {
         yield return new WaitForSeconds(animationDuration);
 
         if (enemyScript == null || enemyScript.gameObject == null) yield break;
 
-        enemyScript.transform.position = finalPosition;
-        enemyScript.SetActiveBehavior(true);
+        // seguridad extra
+        if (enemyScript != null && enemyScript.gameObject != null)
+        {
+            enemyScript.transform.position = finalPosition;
+            enemyScript.SetActiveBehavior(true);
+        }
     }
-
 
     private Vector3 GetRandomPointInside(BoxCollider col)
     {
@@ -169,14 +185,19 @@ public class EnemySpawner : MonoBehaviour
 
     private bool ShouldSpawnSpecialEnemy()
     {
-        // No generar pickups si el jugador ya tiene todas las armas
-        if (gameManager != null && gameManager.PlayerHasAllWeapons())
+        if (player == null) return false;
+
+        // Si el jugador ya tiene las dos armas, no puede aparecer ningún pickup
+        if (player.HasAllWeapons())
             return false;
 
-        float chance = Random.value;
-        return chance <= specialEnemyChance && (gameManager == null || gameManager.CanSpawnSpecialEnemy());
-    }
+        // Probabilidad base
+        if (Random.value > specialEnemyChance)
+            return false;
 
+        // Hay probabilidad de enemigo especial, pero elegir arma válida:
+        return true;
+    }
 
 
     private int FindAreaIndex(BoxCollider area)
@@ -191,6 +212,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void RemoveEnemy(GameObject enemy)
     {
+        if (enemy == null) return;
         if (activeEnemies.Contains(enemy))
         {
             activeEnemies.Remove(enemy);
@@ -199,7 +221,7 @@ public class EnemySpawner : MonoBehaviour
 
     public void OnScoreChanged(int score)
     {
-        // Podrías aumentar la cantidad máxima de enemigos según puntaje
+
         if (score >= 2000) maxEnemiesPerWave = 10;
         else if (score >= 500) maxEnemiesPerWave = 7;
         else maxEnemiesPerWave = 5;
@@ -207,7 +229,8 @@ public class EnemySpawner : MonoBehaviour
 
     public List<GameObject> GetActiveEnemies()
     {
-        return activeEnemies;
+
+        return new List<GameObject>(activeEnemies);
     }
 
     public void OnEnemyReachedBottom(Enemy enemy)
@@ -219,18 +242,16 @@ public class EnemySpawner : MonoBehaviour
         // Limpia el enemigo que causó el Game Over
         if (enemy != null)
         {
-            activeEnemies.Remove(enemy.gameObject);
-            Destroy(enemy.gameObject);
+            RemoveEnemy(enemy.gameObject);
+            SafeDestroy.DestroyEndOfFrame(this, enemy.gameObject);
         }
 
-        // Detén todos los enemigos activos actuales
-        foreach (var e in activeEnemies)
+        // Detén todos los enemigos activos actuales (y marca inactivos)
+        foreach (var e in new List<GameObject>(activeEnemies))
         {
-            if (e != null)
-            {
-                Enemy en = e.GetComponent<Enemy>();
-                if (en != null) en.SetActiveBehavior(false);
-            }
+            if (e == null) continue;
+            Enemy en = e.GetComponent<Enemy>();
+            if (en != null) en.SetActiveBehavior(false);
         }
 
         // Llama al GameManager
@@ -243,6 +264,4 @@ public class EnemySpawner : MonoBehaviour
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameOver");
         }
     }
-
-
 }

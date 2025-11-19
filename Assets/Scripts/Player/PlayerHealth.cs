@@ -8,14 +8,20 @@ public class PlayerHealth : MonoBehaviour
     public int currentHealth;
 
     [Header("HUD de vida")]
-    public Image[] heartImages;        // Las 5 imágenes asignadas en el inspector
-    public Sprite fullHeartSprite;     // Sprite lleno
-    public Sprite emptyHeartSprite;    // Sprite vacío
+    public Image[] heartImages;
+    public Sprite fullHeartSprite;
+    public Sprite emptyHeartSprite;
+
+    [Header("Sonido de daño")]
+    public AudioClip damageSound;      //asignar en el inspector
+    private AudioSource audioSource;
 
     private void Start()
     {
         currentHealth = maxHealth;
         UpdateHearts();
+
+        audioSource = GetComponent<AudioSource>(); //  obtiene el AudioSource del jugador
     }
 
     public void TakeDamage(int damage)
@@ -23,6 +29,10 @@ public class PlayerHealth : MonoBehaviour
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
         UpdateHearts();
+
+        // reproducir sonido daño
+        if (damageSound != null)
+            audioSource.PlayOneShot(damageSound);
 
         if (currentHealth <= 0)
         {
@@ -43,9 +53,7 @@ public class PlayerHealth : MonoBehaviour
 
     private void Die()
     {
-        // Notificar al GameManager
         GameManager.Instance.PlayerDefeated();
-        // Desactivar jugador o destruirlo
         gameObject.SetActive(false);
     }
 }

@@ -10,7 +10,8 @@ public class WeaponPickup : MonoBehaviour
 
     private void Start()
     {
-        Destroy(gameObject, 5f); // destruir si no se recoge en 5 segundos
+        // Destruir de forma segura después de 5s
+        SafeDestroy.DestroyAfterSecondsSafe(this, gameObject, 5f);
     }
 
     private void Update()
@@ -22,15 +23,18 @@ public class WeaponPickup : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            other.GetComponent<PlayerShooting>().UnlockWeapon(weaponId);
+            var ps = other.GetComponent<PlayerShooting>();
+            if (ps != null)
+                ps.UnlockWeapon(weaponId);
 
-            // Reproducir sonido de pickup
+            // Reproducir sonido de pickup (usamos PlayClipAtPoint para no depender del AudioSource local)
             if (pickupSound != null)
             {
                 AudioSource.PlayClipAtPoint(pickupSound, transform.position);
             }
 
-            Destroy(gameObject);
+            // destruir de forma segura al final del frame
+            SafeDestroy.DestroyEndOfFrame(this, gameObject);
         }
     }
 }

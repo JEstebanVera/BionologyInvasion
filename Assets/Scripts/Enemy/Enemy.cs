@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using Unity.VisualScripting;
 
 public class Enemy : MonoBehaviour
 {
@@ -8,10 +7,9 @@ public class Enemy : MonoBehaviour
     public int maxHealth = 10;
     public int currentHealth;
 
-    
     [Header("Efectos")]
-    public GameObject deathEffectPrefab;             // prefab de partículas al morir 
-    public GameObject specialPickupEffectPrefab;     // prefab de partículas verdes si tiene pickup
+    public GameObject deathEffectPrefab;             // prefab de partï¿½culas al morir 
+    public GameObject specialPickupEffectPrefab;     // prefab de partï¿½culas verdes si tiene pickup
 
     [Header("Sonidos")]
     public AudioClip deathSound;        // Sonido de muerte
@@ -20,7 +18,7 @@ public class Enemy : MonoBehaviour
 
     [Header("Pickups")]
     public GameObject weaponPickupChargePrefab;   // prefab del pickup "Cargado" (weaponId = 2)
-    public GameObject weaponPickupMultiplePrefab; // prefab del pickup "Múltiple" (weaponId = 3)
+    public GameObject weaponPickupMultiplePrefab; // prefab del pickup "Mï¿½ltiple" (weaponId = 3)
 
     [Header("Ataque")]
     public GameObject enemyBulletPrefab;  // prefab de bala enemiga (tag: EnemyBullet)
@@ -28,10 +26,9 @@ public class Enemy : MonoBehaviour
 
     [Header("Movimiento Horizontal")]
     public float horizontalSpeed = 2f;      // velocidad lateral
-    public float moveCheckInterval = 0.1f;  // control de borde
 
     [HideInInspector] public bool containsPickup = false;
-    [HideInInspector] public int pickupWeaponId = 2; // 2 = cargado, 3 = múltiple
+    [HideInInspector] public int pickupWeaponId = 2; // 2 = cargado, 3 = mï¿½ltiple
 
     private EnemySpawner spawner;
     private Animator animator;
@@ -42,10 +39,8 @@ public class Enemy : MonoBehaviour
     private bool movingRight = true;
     private bool isDead = false;
 
-
     private Coroutine shootingCoroutine;
-    private BoxCollider currentArea;  // área actual
-
+    private BoxCollider currentArea;  // ï¿½rea actual
 
     private void Awake()
     {
@@ -57,29 +52,25 @@ public class Enemy : MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
-
         audioSource.playOnAwake = false;
     }
 
     private void Start()
     {
-       
         if (containsPickup && specialPickupEffectPrefab != null)
         {
             GameObject fx = Instantiate(specialPickupEffectPrefab, transform.position, Quaternion.identity, transform);
-            // Destruir el efecto tras unos segundos (opcional)
-            Destroy(fx, 10f);
+            SafeDestroy.DestroyAfterSecondsSafe(this, fx, 10f);
         }
     }
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.IsPaused)
-            return;
-
+        if (isDead) return;
+        if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
         if (!isActive || currentArea == null) return;
 
-        // Movimiento horizontal dentro del área
+        // Movimiento horizontal dentro del ï¿½rea
         Vector3 pos = transform.position;
         float dir = movingRight ? 1f : -1f;
         pos.x += dir * horizontalSpeed * Time.deltaTime;
@@ -87,7 +78,7 @@ public class Enemy : MonoBehaviour
         Vector3 min = currentArea.bounds.min;
         Vector3 max = currentArea.bounds.max;
 
-        // Invertir dirección al llegar a los bordes
+        // Invertir direcciï¿½n al llegar a los bordes
         if (pos.x >= max.x)
         {
             pos.x = max.x;
@@ -119,6 +110,7 @@ public class Enemy : MonoBehaviour
 
     public void SetActiveBehavior(bool active)
     {
+        if (isDead) return;
         isActive = active;
 
         if (active)
@@ -127,12 +119,19 @@ public class Enemy : MonoBehaviour
         }
         else
         {
-            StopAllCoroutines();
+            // Detener sï¿½lo las corrutinas internas relacionadas
+            if (shootingCoroutine != null)
+            {
+                StopCoroutine(shootingCoroutine);
+                shootingCoroutine = null;
+            }
         }
     }
 
     private void StartMovementAndShooting()
     {
+        if (isDead) return;
+
         if (shootingCoroutine != null)
             StopCoroutine(shootingCoroutine);
 
@@ -141,7 +140,7 @@ public class Enemy : MonoBehaviour
 
     private IEnumerator ShootingRoutine()
     {
-        while (true)
+        while (!isDead)
         {
             yield return new WaitForSeconds(1f);
             if (!isActive) continue;
@@ -151,6 +150,7 @@ public class Enemy : MonoBehaviour
 
     private void Shoot()
     {
+        if (isDead) return;
         if (enemyBulletPrefab == null || bulletSpawnPoint == null) return;
 
         GameObject bullet = Instantiate(enemyBulletPrefab, bulletSpawnPoint.position, Quaternion.identity);
@@ -160,35 +160,44 @@ public class Enemy : MonoBehaviour
             rbBullet.linearVelocity = Vector3.down * 6f;
         }
 
-        Destroy(bullet, 3f);
+        SafeDestroy.DestroyAfterSecondsSafe(this, bullet, 3f);
 
         // Sonidos
         if (shootSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(shootSound);
         }
-
     }
 
     public void MoveDown()
     {
+        if (isDead) return;
+
         int nextArea = currentAreaIndex + 1;
 
         if (spawner == null || nextArea >= spawner.spawnAreas.Length)
         {
-            GameManager.Instance.GameOver();
+            // Notificamos al spawner (usa su mï¿½todo de GameOver)
+            if (spawner != null)
+                spawner.OnEnemyReachedBottom(this);
+            else
+                GameManager.Instance.GameOver();
+
             return;
         }
 
         currentAreaIndex = nextArea;
         currentArea = spawner.spawnAreas[currentAreaIndex];
 
+        // asegurarnos de cancelar corutinas vulnerables y ejecutar la bajada
         StopAllCoroutines();
         StartCoroutine(MoveDownRoutine());
     }
 
     private IEnumerator MoveDownRoutine()
     {
+        if (isDead) yield break;
+
         Vector3 start = transform.position;
         Vector3 end = new Vector3(start.x, currentArea.bounds.center.y, start.z);
         float duration = 0.4f;
@@ -196,13 +205,19 @@ public class Enemy : MonoBehaviour
 
         while (t < duration)
         {
+            if (this == null) yield break;
             transform.position = Vector3.Lerp(start, end, t / duration);
             t += Time.deltaTime;
             yield return null;
         }
 
+        if (this == null) yield break;
+
         transform.position = end;
         isActive = true;
+
+        // Reiniciar disparo seguro
+        if (shootingCoroutine != null) StopCoroutine(shootingCoroutine);
         shootingCoroutine = StartCoroutine(ShootingRoutine());
     }
 
@@ -215,26 +230,30 @@ public class Enemy : MonoBehaviour
             Die();
     }
 
-
     private void Die()
     {
-        if (isDead) return; // Evita doble ejecución
-        isDead = true;      //  Marca como muerto
+        if (isDead) return;
+        isDead = true;
 
-        //Desactiva el collider y movimiento para que no siga interactuando
+        // Detener todo comportamiento y corutinas
+        StopAllCoroutines();
+        isActive = false;
+
+        // Deshabilitar collider para evitar nuevas colisiones
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
-        isActive = false; // Detiene comportamiento
+
+        // reproducir sonido de muerte
         if (deathSound != null && audioSource != null)
         {
             audioSource.PlayOneShot(deathSound);
         }
 
-        // Instanciar y destruir automáticamente el efecto
+        // Instanciar efecto de muerte y destruirlo de forma segura
         if (deathEffectPrefab != null)
         {
             GameObject fx = Instantiate(deathEffectPrefab, transform.position, Quaternion.identity);
-            Destroy(fx, 3f); // destruye la instancia del efecto tras unos segundos
+            SafeDestroy.DestroyAfterSecondsSafe(this, fx, 3f);
         }
 
         // Soltar pickup correcto si aplica
@@ -251,17 +270,20 @@ public class Enemy : MonoBehaviour
                 GameObject pickup = Instantiate(prefabToSpawn, transform.position, Quaternion.identity);
                 var wp = pickup.GetComponent<WeaponPickup>();
                 if (wp != null) wp.weaponId = pickupWeaponId;
-                Destroy(pickup, 5f); // desaparece si no se recoge
+                SafeDestroy.DestroyAfterSecondsSafe(this, pickup, 5f);
             }
         }
 
+        // Sumar puntos (una sola vez)
         GameManager.Instance.AddScore(10);
 
+        // Notificar spawner para remover de su lista
         if (spawner != null)
             spawner.RemoveEnemy(gameObject);
 
-        Destroy(gameObject, deathSound != null ? deathSound.length : 0f);
+        // Destruir el enemigo de forma segura tras acabar el sonido (si hay) o inmediatamente
+        float wait = (deathSound != null) ? deathSound.length : 0f;
+        SafeDestroy.DestroyAfterSecondsSafe(this, gameObject, wait);
     }
-
 }
 
