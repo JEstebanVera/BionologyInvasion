@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour
 
     // --- CONTROL INTERNO ---
     private int currentLevel = 1;
-    private int[] levelThresholds = { 100, 500, 1000 };
+    private int[] levelThresholds = { 100, 300, 500 };
     public bool IsPaused { get; private set; } = false;
 
     private void Awake()
@@ -207,9 +207,9 @@ public class GameManager : MonoBehaviour
 
     public float GetSpawnIntervalByScore()
     {
-        if (score >= 500) return 3f;
-        if (score >= 100) return 6f;
-        return 9f;
+        if (score >= 300) return 1f;
+        if (score >= 100) return 3f;
+        return 8f;
     }
 
     public bool CanSpawnSpecialEnemy()

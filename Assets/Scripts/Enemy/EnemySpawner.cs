@@ -15,7 +15,7 @@ public class EnemySpawner : MonoBehaviour
     public GameManager gameManager;
 
     [Header("Control de Spawn")]
-    public int maxEnemiesPerWave = 5;
+    public int maxEnemiesPerWave = 15;
     private List<GameObject> activeEnemies = new List<GameObject>();
     private bool spawning = true;
 
@@ -222,8 +222,8 @@ public class EnemySpawner : MonoBehaviour
     public void OnScoreChanged(int score)
     {
 
-        if (score >= 2000) maxEnemiesPerWave = 10;
-        else if (score >= 500) maxEnemiesPerWave = 7;
+        if (score >= 500) maxEnemiesPerWave = 15;
+        else if (score >= 300) maxEnemiesPerWave = 7;
         else maxEnemiesPerWave = 5;
     }
 

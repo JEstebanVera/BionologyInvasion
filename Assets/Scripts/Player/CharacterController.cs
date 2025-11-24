@@ -28,6 +28,7 @@ public class CharacterController : MonoBehaviour
     {
         HandleMovement();
         HandleDash();
+        HandleRotation();
     }
 
     private void HandleMovement()
@@ -62,6 +63,22 @@ public class CharacterController : MonoBehaviour
             else if (Input.GetKey(KeyCode.D))
                 StartCoroutine(DoDash(1f));
         }
+    }
+
+    private void HandleRotation()
+    {
+        float targetZ = 0f;
+
+        if (!Input.GetKey(KeyCode.A))
+            targetZ = 20f;
+        else if (Input.GetKey(KeyCode.D))
+            targetZ = -20f;
+
+        // suavizar rotacion
+        float currentZ = transform.rotation.eulerAngles.z;
+        float newZ = Mathf.LerpAngle(currentZ,targetZ, Time.deltaTime*10f);
+
+        transform.rotation = Quaternion.Euler(0f,0f,newZ);
     }
 
     private System.Collections.IEnumerator DoDash(float direction)
