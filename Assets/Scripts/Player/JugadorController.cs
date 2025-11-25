@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class CharacterController : MonoBehaviour
+public class JugadorController : MonoBehaviour
 {
     [Header("Movimiento")]
     public float moveSpeed = 5f;
@@ -16,8 +16,11 @@ public class CharacterController : MonoBehaviour
     private bool isDashing = false;
 
     [Header("Sonido de Dash")]
-    public AudioClip dashSound;     // asignar en el inspector
+    public AudioClip dashSound;
     private AudioSource audioSource;
+
+    public Transform model;
+
 
     private void Start()
     {
@@ -69,17 +72,18 @@ public class CharacterController : MonoBehaviour
     {
         float targetZ = 0f;
 
-        if (!Input.GetKey(KeyCode.A))
+        if (Input.GetKey(KeyCode.A))
             targetZ = 20f;
         else if (Input.GetKey(KeyCode.D))
             targetZ = -20f;
 
-        // suavizar rotacion
-        float currentZ = transform.rotation.eulerAngles.z;
-        float newZ = Mathf.LerpAngle(currentZ,targetZ, Time.deltaTime*10f);
+        float currentZ = model.localRotation.eulerAngles.z;
 
-        transform.rotation = Quaternion.Euler(0f,0f,newZ);
+        float newZ = Mathf.LerpAngle(currentZ, targetZ, Time.deltaTime * 10f);
+
+        model.localRotation = Quaternion.Euler(0f, 0f, newZ);
     }
+
 
     private System.Collections.IEnumerator DoDash(float direction)
     {
@@ -109,4 +113,5 @@ public class CharacterController : MonoBehaviour
         isDashing = false;
     }
 }
+
 

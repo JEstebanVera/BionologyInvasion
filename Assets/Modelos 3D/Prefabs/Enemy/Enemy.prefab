@@ -75,12 +75,15 @@ MonoBehaviour:
   specialPickupEffectPrefab: {fileID: 0}
   deathSound: {fileID: 8300000, guid: 7b0d5919677d2ce4a9a8a8d92d6d95bb, type: 3}
   shootSound: {fileID: 8300000, guid: 53d01ee95b651994d934223d94d3d538, type: 3}
+  hitSound: {fileID: 8300000, guid: c447860f0270a094da02a5bb3a049fc9, type: 3}
   weaponPickupChargePrefab: {fileID: 1599696927340244315, guid: 6be1539d5535e3942aa025124000f8c9, type: 3}
   weaponPickupMultiplePrefab: {fileID: 5498965703043527118, guid: 63f07ab360c3ed94ca0d4baf77ac880c, type: 3}
   enemyBulletPrefab: {fileID: 3026530894997134902, guid: 6399332ca823b834fb40c42e74cf6194, type: 3}
   bulletSpawnPoint: {fileID: 5900751778396851283}
   horizontalSpeed: 2
-  moveCheckInterval: 0.1
+  modelRenderer: {fileID: 4680514072983619567}
+  normalMaterials: []
+  hitMaterials: []
   containsPickup: 0
   pickupWeaponId: 2
 --- !u!82 &1906683536485875088
@@ -280,6 +283,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2d4f3292ebaafee48afed2b4403e37e9, type: 3}
+--- !u!23 &4680514072983619567 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7511558181221131132, guid: 2d4f3292ebaafee48afed2b4403e37e9, type: 3}
+  m_PrefabInstance: {fileID: 6283950166370507627}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5818556283279129728 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2d4f3292ebaafee48afed2b4403e37e9, type: 3}

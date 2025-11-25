@@ -3,7 +3,7 @@ using UnityEngine;
 public class WeaponPickup : MonoBehaviour
 {
     public int weaponId; // 2 = cargado, 3 = múltiple
-    public float fallSpeed = 1f; // velocidad en la que cae
+    public float fallSpeed = 0.3f; // velocidad en la que cae
 
     [Header("Sonido")]
     public AudioClip pickupSound;
