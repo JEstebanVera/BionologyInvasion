@@ -73,6 +73,7 @@ Material:
     - _ZTest: 4
     - _ZWrite: 1
     - _ZWriteControl: 0
-    m_Colors: []
+    m_Colors:
+    - _Tint: {r: 0.7924528, g: 0.7924528, b: 0.7924528, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
