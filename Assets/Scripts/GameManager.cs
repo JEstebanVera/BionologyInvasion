@@ -110,7 +110,9 @@ public class GameManager : MonoBehaviour
         if (levelTransitionParticlesPrefab != null)
         {
             // Instancia el prefab y lo mantiene visible incluso si Time.timeScale = 0
-            GameObject fx = Instantiate(levelTransitionParticlesPrefab, Vector3.zero, Quaternion.identity);
+            Vector3 transitionPos = new Vector3(-3f, 15f, 2.9f);
+            GameObject fx = Instantiate(levelTransitionParticlesPrefab, transitionPos, Quaternion.identity);
+
 
             var ps = fx.GetComponent<ParticleSystem>();
             if (ps != null)
