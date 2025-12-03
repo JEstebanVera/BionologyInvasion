@@ -25,15 +25,14 @@ public class CarLaneController : MonoBehaviour
 
     private void OnDisable()
     {
+        // cuando el objeto se desactiva, pausamos el loop y limpiamos con seguridad
         isShuttingDown = true;
 
-        // Detener coroutines inmediatamente
         if (loopCoroutine != null)
             StopCoroutine(loopCoroutine);
 
         StopAllCoroutines();
 
-        // Destruir coche solo si aún existe
         if (currentCar != null)
         {
             Destroy(currentCar);
@@ -46,8 +45,10 @@ public class CarLaneController : MonoBehaviour
         while (!isShuttingDown)
         {
             GameObject prefab = GetRandomCar();
-            currentCar = Instantiate(prefab, spawnPoint.position, Quaternion.Euler(-90f, 0f, 0f));
+            if (prefab == null) yield break;
 
+            // instanciamos con rotación X = -90
+            currentCar = Instantiate(prefab, spawnPoint.position, Quaternion.Euler(-90f, 0f, 0f));
 
             yield return StartCoroutine(MoveCar());
 
@@ -87,4 +88,58 @@ public class CarLaneController : MonoBehaviour
 
         return carPrefabs[Random.Range(0, carPrefabs.Length)];
     }
+
+    // Fuerza la parada completa y destruye el coche actual (como tenías antes)
+    public void ForceStop()
+    {
+        isShuttingDown = true;
+        StopAllCoroutines();
+
+        if (currentCar != null)
+        {
+            Destroy(currentCar);
+            currentCar = null;
+        }
+    }
+
+    // PAUSA no destructiva: detiene el loop pero NO destruye el coche actual (más segura)
+    public void PauseSpawn()
+    {
+        if (isShuttingDown) return;
+        isShuttingDown = true;
+
+        if (loopCoroutine != null)
+            StopCoroutine(loopCoroutine);
+
+        loopCoroutine = null;
+        // no destruimos currentCar aquí; lo dejamos quieto
+    }
+
+    // Reanuda el spawn si fue pausado
+    public void ResumeSpawn()
+    {
+        if (!isShuttingDown) return;
+        isShuttingDown = false;
+
+        // Si ya hay una coroutine, no arrancamos otra
+        if (loopCoroutine == null)
+            loopCoroutine = StartCoroutine(CarLoop());
+    }
+
+    public void StopPermanently()
+    {
+        isShuttingDown = true;
+
+        if (loopCoroutine != null)
+            StopCoroutine(loopCoroutine);
+
+        loopCoroutine = null;
+
+        if (currentCar != null)
+        {
+            Destroy(currentCar);
+            currentCar = null;
+        }
+    }
+
 }

@@ -25,9 +25,10 @@ public class GameManager : MonoBehaviour
     public EnemySpawner spawner;
 
     [Header("Transición de Niveles")]
-    public GameObject levelTransitionParticlesPrefab;  
     public float transitionDuration = 5f;
 
+    [Header("Iluminación")]
+    public GameObject directionalLight;
 
     // --- CONTROL INTERNO ---
     private int currentLevel = 1;
@@ -89,60 +90,72 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator LevelTransitionRoutine(int level)
     {
+        // Pausar el juego visualmente
         PauseGame(true);
 
-        // Detener spawner
-        if (spawner != null)
-            spawner.enabled = false;
+        // --- DETENER COCHES DEL NIVEL ACTUAL ---
+        var cars = FindObjectsOfType<CarLaneController>();
+        foreach (var c in cars)
+        {
+            if (c != null)
+                c.StopPermanently(); // detiene la coroutine para siempre
+        }
 
-        // Mensaje
+        // --- DETENER SPAWNER DE ENEMIGOS ---
+        if (spawner != null)
+        {
+            spawner.SafeStop(); // detiene spawn y comportamiento de enemigos
+            spawner.enabled = false;
+        }
+
+        // --- DESTRUIR TODOS LOS ENEMIGOS VIVOS ---
+        if (spawner != null)
+        {
+            foreach (var e in spawner.GetActiveEnemies())
+            {
+                if (e != null)
+                    Destroy(e);
+            }
+        }
+
+        // --- MOSTRAR MENSAJE DE TRANSICIÓN ---
         string msg = "";
         switch (level)
         {
             case 1: msg = "¡Nivel 2! Más enemigos"; break;
             case 2: msg = "¡Nivel 3! Invasión intensa"; break;
-            case 3: msg = "¡Victoria! Invasion detenida"; break;
+            case 3: msg = "¡Victoria! Invasión detenida"; break;
         }
 
         ShowMessage(msg);
 
-        // --- Instanciar sistema de partículas ---
-        if (levelTransitionParticlesPrefab != null)
-        {
-            // Instancia el prefab y lo mantiene visible incluso si Time.timeScale = 0
-            Vector3 transitionPos = new Vector3(-3f, 15f, 2.9f);
-            GameObject fx = Instantiate(levelTransitionParticlesPrefab, transitionPos, Quaternion.identity);
-
-
-            var ps = fx.GetComponent<ParticleSystem>();
-            if (ps != null)
-            {
-                var main = ps.main;
-                main.simulationSpeed = 1f;
-                main.useUnscaledTime = true; 
-                ps.Play();
-            }
-
-            Destroy(fx, transitionDuration + 1f); 
-        }
-
+        // Espera sin depender de Time.timeScale
         yield return new WaitForSecondsRealtime(transitionDuration);
-
 
         HideMessage();
 
+        // Cambiar fondo al siguiente nivel
         SetFondo(level + 1);
-
+        // Desactivar Directional Light si es el nivel 3
+        if (level + 1 == 3 && directionalLight != null)
+        {
+            directionalLight.SetActive(false);
+        }
         UpdateNextLevelUI();
 
         // Reanudar juego
         PauseGame(false);
 
-        // Reanudar spawn si no es el final
+        // Reanudar spawner solo si no es el último nivel
         if (level < levelThresholds.Length && spawner != null)
+        {
+            spawner.SafeResume();
             spawner.enabled = true;
+        }
         else if (level >= levelThresholds.Length)
+        {
             StartCoroutine(EndGameRoutine());
+        }
     }
 
 
@@ -171,7 +184,6 @@ public class GameManager : MonoBehaviour
         Cursor.visible = true;
         SceneManager.LoadScene("Credits");
     }
-
 
     private void SetFondo(int level)
     {
@@ -232,9 +244,8 @@ public class GameManager : MonoBehaviour
     {
         PlayerShooting player = FindObjectOfType<PlayerShooting>();
         if (player == null) return false;
-        return player.HasAllWeapons(); 
+        return player.HasAllWeapons();
     }
-
 
     public void GameOver()
     {

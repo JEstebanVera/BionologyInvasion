@@ -18,75 +18,101 @@ public class PlayerShooting : MonoBehaviour
     public float chargeTime = 2f;
 
     [Header("Visual de Carga")]
-    public Transform chargeOrb;         // El orb que crece en el cañón
-    public Vector3 maxOrbScale = new Vector3(1f, 1f, 1f); // Tamaño maximo del orb
-    public Color chargedColor = Color.red; // Color cuando se completa la carga
+    public Transform chargeOrb;
+    public Vector3 maxOrbScale = new Vector3(1f, 1f, 1f);
+    public Color chargedColor = Color.red;
     private Vector3 initialOrbScale;
     private Renderer orbRenderer;
     private Color baseOrbColor;
 
     [Header("Sonidos de Disparo")]
-    public AudioClip basicShootSound;      // Sonido del disparo básico
-    public AudioClip chargedShootSound;    // Sonido del disparo cargado
-    public AudioClip multiShootSound;      // Sonido del disparo múltiple
-    private AudioSource audioSource;       // Fuente de audio
+    public AudioClip basicShootSound;
+    public AudioClip chargedShootSound;
+    public AudioClip multiShootSound;
+    private AudioSource audioSource;
 
+    [Header("Armas Temporales")]
+    public bool specialWeaponActive = false;
+    private float specialWeaponTimer = 0f;
+    public float specialWeaponDuration = 30f;
+
+    public Sprite defaultWeaponSprite;
     public HUDManager hudManager;
+
     private enum WeaponType { Basic, Charged, Multi }
     private WeaponType currentWeapon = WeaponType.Basic;
 
-    private HashSet<WeaponType> unlockedWeapons = new HashSet<WeaponType>() { WeaponType.Basic };
-
     private float chargeTimer = 0f;
-    private bool isCharging = false;
 
     private void Start()
     {
+        initialOrbScale = Vector3.zero;
+
         if (chargeOrb != null)
         {
-            initialOrbScale = Vector3.zero;
             orbRenderer = chargeOrb.GetComponent<Renderer>();
-            if (orbRenderer != null)
-                baseOrbColor = orbRenderer.material.color;
-            chargeOrb.localScale = initialOrbScale; // oculto al inicio
+            baseOrbColor = orbRenderer.material.color;
+            chargeOrb.localScale = initialOrbScale;
         }
 
         audioSource = GetComponent<AudioSource>();
         if (audioSource == null)
             audioSource = gameObject.AddComponent<AudioSource>();
-
         audioSource.playOnAwake = false;
         audioSource.spatialBlend = 0f;
+
+        hudManager.SetHighlight(1); // arma básica al iniciar
     }
 
     private void Update()
     {
-        HandleWeaponSwitch();
+        HandleWeaponTimer();
         HandleShooting();
         UpdateChargeOrb();
     }
 
-    private void HandleWeaponSwitch()
+    // --------------------------
+    //     SISTEMA TEMPORAL
+    // --------------------------
+    public void ActivateSpecialWeapon(int weaponId)
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1) && unlockedWeapons.Contains(WeaponType.Basic))
-        {
-            currentWeapon = WeaponType.Basic;
-            hudManager.SetHighlight(1);
-        }
+        specialWeaponActive = true;
+        specialWeaponTimer = specialWeaponDuration;
 
-        if (Input.GetKeyDown(KeyCode.Alpha2) && unlockedWeapons.Contains(WeaponType.Charged))
+        if (weaponId == 2)
         {
             currentWeapon = WeaponType.Charged;
             hudManager.SetHighlight(2);
         }
-
-        if (Input.GetKeyDown(KeyCode.Alpha3) && unlockedWeapons.Contains(WeaponType.Multi))
+        if (weaponId == 3)
         {
             currentWeapon = WeaponType.Multi;
             hudManager.SetHighlight(3);
         }
+
+        hudManager.UnlockWeaponHUD(weaponId);
+        hudManager.SetHighlight(weaponId);
+
     }
 
+    private void HandleWeaponTimer()
+    {
+        if (!specialWeaponActive) return;
+
+        specialWeaponTimer -= Time.deltaTime;
+
+        if (specialWeaponTimer <= 0f)
+        {
+            specialWeaponActive = false;
+            currentWeapon = WeaponType.Basic;
+            hudManager.LockAllWeaponsHUD();
+            hudManager.SetHighlight(1);
+        }
+    }
+
+    // --------------------------
+    //       DISPARO NORMAL
+    // --------------------------
     private void HandleShooting()
     {
         switch (currentWeapon)
@@ -100,7 +126,7 @@ public class PlayerShooting : MonoBehaviour
                 break;
 
             case WeaponType.Charged:
-                if (Input.GetMouseButton(0)) // mantener click izquierdo
+                if (Input.GetMouseButton(0))
                 {
                     chargeTimer += Time.deltaTime;
 
@@ -110,19 +136,16 @@ public class PlayerShooting : MonoBehaviour
                         PlaySound(chargedShootSound);
 
                         chargeTimer = 0f;
-                        isCharging = false;
-                        if (chargeOrb != null) chargeOrb.localScale = Vector3.zero;
-                        if (orbRenderer != null) orbRenderer.material.color = baseOrbColor;
+                        chargeOrb.localScale = Vector3.zero;
+                        orbRenderer.material.color = baseOrbColor;
                     }
                 }
 
-                if (Input.GetMouseButtonUp(0)) // reset al soltar antes de cargar
+                if (Input.GetMouseButtonUp(0))
                 {
                     chargeTimer = 0f;
-                    isCharging = false;
-
-                    if (chargeOrb != null) chargeOrb.localScale = Vector3.zero;
-                    if (orbRenderer != null) orbRenderer.material.color = baseOrbColor;
+                    chargeOrb.localScale = Vector3.zero;
+                    orbRenderer.material.color = baseOrbColor;
                 }
                 break;
 
@@ -140,24 +163,17 @@ public class PlayerShooting : MonoBehaviour
 
     private void UpdateChargeOrb()
     {
-        if (chargeOrb == null || orbRenderer == null) return;
-
-        if (currentWeapon == WeaponType.Charged && Input.GetMouseButton(0))
+        if (currentWeapon != WeaponType.Charged || !Input.GetMouseButton(0))
         {
-            float t = Mathf.Clamp01(chargeTimer / chargeTime);
-            chargeOrb.localScale = Vector3.Lerp(Vector3.zero, maxOrbScale, t);
-
-            if (t >= 1f)
-            {
-                orbRenderer.material.color = chargedColor; // cambia de color al cargarse
-            }
-        }
-        else
-        {
-            // Siempre ocultar el orb cuando no estamos cargando
             chargeOrb.localScale = Vector3.zero;
-            orbRenderer.material.color = baseOrbColor;
+            return;
         }
+
+        float t = Mathf.Clamp01(chargeTimer / chargeTime);
+        chargeOrb.localScale = Vector3.Lerp(Vector3.zero, maxOrbScale, t);
+
+        if (t >= 1f)
+            orbRenderer.material.color = chargedColor;
     }
 
     private void ShootBullet(GameObject bulletPrefab, Transform spawnPoint, Vector3 direction)
@@ -166,45 +182,19 @@ public class PlayerShooting : MonoBehaviour
 
         GameObject bullet = Instantiate(bulletPrefab, spawnPoint.position, Quaternion.identity);
         Rigidbody rb = bullet.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = direction * bulletSpeed;
-        }
+        rb.linearVelocity = direction * bulletSpeed;
+
         SafeDestroy.DestroyAfterSecondsSafe(this, bullet, 2f);
-    }
-
-    public void UnlockWeapon(int weaponId)
-    {
-        if (weaponId == 2)
-        {
-            unlockedWeapons.Add(WeaponType.Charged);
-            Debug.Log("Arma Cargada desbloqueada!");
-            hudManager.UnlockWeaponHUD(2);
-        }
-        if (weaponId == 3)
-        {
-            unlockedWeapons.Add(WeaponType.Multi);
-            Debug.Log("Arma Múltiple desbloqueada!");
-            hudManager.UnlockWeaponHUD(3);
-        }
-    }
-
-    // Devuelve si el jugador ya desbloqueó la arma con id (2 o 3)
-    public bool HasUnlockedWeapon(int weaponId)
-    {
-        if (weaponId == 2) return unlockedWeapons.Contains(WeaponType.Charged);
-        if (weaponId == 3) return unlockedWeapons.Contains(WeaponType.Multi);
-        return false;
-    }
-
-    public bool HasAllWeapons()
-    {
-        return unlockedWeapons.Contains(WeaponType.Charged) && unlockedWeapons.Contains(WeaponType.Multi);
     }
 
     private void PlaySound(AudioClip clip)
     {
-        if (clip != null && audioSource != null)
+        if (clip != null)
             audioSource.PlayOneShot(clip);
+    }
+
+    public bool HasAllWeapons()
+    {
+        return false;
     }
 }

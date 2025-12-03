@@ -2,39 +2,17 @@ using UnityEngine;
 
 public class WeaponPickup : MonoBehaviour
 {
-    public int weaponId; // 2 = cargado, 3 = múltiple
-    public float fallSpeed = 0.3f; // velocidad en la que cae
-
-    [Header("Sonido")]
-    public AudioClip pickupSound;
-
-    private void Start()
-    {
-        // Destruir de forma segura después de 5s
-        SafeDestroy.DestroyAfterSecondsSafe(this, gameObject, 5f);
-    }
-
-    private void Update()
-    {
-        transform.Translate(Vector3.down * fallSpeed * Time.deltaTime);
-    }
+    public int weaponId;
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
-        {
-            var ps = other.GetComponent<PlayerShooting>();
-            if (ps != null)
-                ps.UnlockWeapon(weaponId);
+        if (!other.CompareTag("Player")) return;
 
-            // Reproducir sonido de pickup (usamos PlayClipAtPoint para no depender del AudioSource local)
-            if (pickupSound != null)
-            {
-                AudioSource.PlayClipAtPoint(pickupSound, transform.position);
-            }
+        PlayerShooting player = other.GetComponent<PlayerShooting>();
+        if (player == null) return;
 
-            // destruir de forma segura al final del frame
-            SafeDestroy.DestroyEndOfFrame(this, gameObject);
-        }
+        player.ActivateSpecialWeapon(weaponId);
+
+        Destroy(gameObject);
     }
 }

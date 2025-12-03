@@ -72,4 +72,17 @@ public class HUDManager : MonoBehaviour
                 break;
         }
     }
+
+    public void LockAllWeaponsHUD()
+    {
+        if (chargedWeaponSlot != null)
+            chargedWeaponSlot.sprite = chargedLockedSprite;
+
+        if (multiWeaponSlot != null)
+            multiWeaponSlot.sprite = multiLockedSprite;
+
+        SetHighlight(1);
+    }
+
+
 }

@@ -187,9 +187,10 @@ public class EnemySpawner : MonoBehaviour
     {
         if (player == null) return false;
 
-        // Si el jugador ya tiene las dos armas, no puede aparecer ningún pickup
-        if (player.HasAllWeapons())
+      
+        if (player.specialWeaponActive)
             return false;
+
 
         // Probabilidad base
         if (Random.value > specialEnemyChance)
@@ -218,6 +219,29 @@ public class EnemySpawner : MonoBehaviour
             activeEnemies.Remove(enemy);
         }
     }
+
+    public void SafeStop()
+    {
+        spawning = false;
+        StopAllCoroutines(); // solo detiene las coroutines de este script
+
+        // desactivar comportamiento enemigo sin destruirlos
+        foreach (var e in activeEnemies)
+        {
+            if (e == null) continue;
+            Enemy en = e.GetComponent<Enemy>();
+            if (en != null)
+                en.SetActiveBehavior(false);
+        }
+    }
+
+    public void SafeResume()
+    {
+        spawning = true;
+        StartCoroutine(SpawnRoutine());
+    }
+
+
 
     public void OnScoreChanged(int score)
     {
@@ -264,4 +288,5 @@ public class EnemySpawner : MonoBehaviour
             UnityEngine.SceneManagement.SceneManager.LoadScene("GameOver");
         }
     }
+
 }

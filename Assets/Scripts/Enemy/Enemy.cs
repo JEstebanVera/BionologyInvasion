@@ -207,9 +207,7 @@ public class Enemy : MonoBehaviour
         shootingCoroutine = StartCoroutine(ShootingRoutine());
     }
 
-    // ============================
-    //    NUEVA LÓGICA
-    // ============================
+
     public void TakeDamage(int dmg)
     {
         if (isDead) return;
@@ -222,7 +220,6 @@ public class Enemy : MonoBehaviour
         if (currentHealth <= 0)
             Die();
     }
-    // ============================
 
     private void Die()
     {
