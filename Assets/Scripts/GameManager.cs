@@ -122,9 +122,9 @@ public class GameManager : MonoBehaviour
         string msg = "";
         switch (level)
         {
-            case 1: msg = "¡Nivel 2! Más enemigos"; break;
-            case 2: msg = "¡Nivel 3! Invasión intensa"; break;
-            case 3: msg = "¡Victoria! Invasión detenida"; break;
+            case 1: msg = "¡Nivel 2! se avecinan enemigos"; break;
+            case 2: msg = "¡Nivel 3! acaba con todos"; break;
+            case 3: msg = "¡Victoria! Invasion detenida"; break;
         }
 
         ShowMessage(msg);
