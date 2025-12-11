@@ -1,5 +1,6 @@
-using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class PlayerShooting : MonoBehaviour
 {
@@ -38,6 +39,8 @@ public class PlayerShooting : MonoBehaviour
 
     public Sprite defaultWeaponSprite;
     public HUDManager hudManager;
+    private Coroutine weaponTimerCoroutine = null;
+
 
     private enum WeaponType { Basic, Charged, Multi }
     private WeaponType currentWeapon = WeaponType.Basic;
@@ -66,7 +69,7 @@ public class PlayerShooting : MonoBehaviour
 
     private void Update()
     {
-        HandleWeaponTimer();
+ 
         HandleShooting();
         UpdateChargeOrb();
     }
@@ -76,39 +79,59 @@ public class PlayerShooting : MonoBehaviour
     // --------------------------
     public void ActivateSpecialWeapon(int weaponId)
     {
+        // Cancelar timer previo si ya había uno corriendo
+        if (weaponTimerCoroutine != null)
+            StopCoroutine(weaponTimerCoroutine);
+
         specialWeaponActive = true;
         specialWeaponTimer = specialWeaponDuration;
 
         if (weaponId == 2)
-        {
             currentWeapon = WeaponType.Charged;
-            hudManager.SetHighlight(2);
-        }
-        if (weaponId == 3)
-        {
+
+        else if (weaponId == 3)
             currentWeapon = WeaponType.Multi;
-            hudManager.SetHighlight(3);
-        }
 
         hudManager.UnlockWeaponHUD(weaponId);
         hudManager.SetHighlight(weaponId);
 
+        // Iniciar nuevo timer
+        weaponTimerCoroutine = StartCoroutine(WeaponTimerRoutine());
     }
 
-    private void HandleWeaponTimer()
+
+    private IEnumerator WeaponTimerRoutine()
     {
-        if (!specialWeaponActive) return;
-
-        specialWeaponTimer -= Time.deltaTime;
-
-        if (specialWeaponTimer <= 0f)
+        while (specialWeaponTimer > 0f)
         {
-            specialWeaponActive = false;
-            currentWeapon = WeaponType.Basic;
+            specialWeaponTimer -= Time.deltaTime;
+
+            if (hudManager != null)
+            {
+                if (currentWeapon == WeaponType.Charged)
+                    hudManager.UpdateWeaponTimer(2, specialWeaponTimer);
+
+                if (currentWeapon == WeaponType.Multi)
+                    hudManager.UpdateWeaponTimer(3, specialWeaponTimer);
+            }
+
+            yield return null;
+        }
+
+        // Tiempo agotado → vuelve a básico
+        specialWeaponActive = false;
+        currentWeapon = WeaponType.Basic;
+
+        if (hudManager != null)
+        {
             hudManager.LockAllWeaponsHUD();
             hudManager.SetHighlight(1);
+            hudManager.ClearWeaponTimers();
         }
+
+        weaponTimerCoroutine = null;
     }
+
 
     // --------------------------
     //       DISPARO NORMAL

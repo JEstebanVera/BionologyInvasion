@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,6 +21,10 @@ public class HUDManager : MonoBehaviour
     public Sprite multiLockedSprite;
     public Sprite multiActiveSprite;
 
+    [Header("Contadores de duración (TMP)")]
+    public TextMeshProUGUI chargedTimerText;
+    public TextMeshProUGUI multiTimerText;
+
     private void Start()
     {
         // Config inicial
@@ -31,6 +36,10 @@ public class HUDManager : MonoBehaviour
 
         if (multiWeaponSlot != null)
             multiWeaponSlot.sprite = multiLockedSprite;
+
+        // Ocultar timers al iniciar
+        if (chargedTimerText != null) chargedTimerText.gameObject.SetActive(false);
+        if (multiTimerText != null) multiTimerText.gameObject.SetActive(false);
 
         // Apagamos todos los highlights al inicio
         SetHighlight(1); // por defecto selecciona el básico
@@ -71,6 +80,29 @@ public class HUDManager : MonoBehaviour
                 if (multiHighlight != null) multiHighlight.SetActive(true);
                 break;
         }
+    }
+
+    public void UpdateWeaponTimer(int weaponId, float timeLeft)
+    {
+        string t = Mathf.Ceil(timeLeft).ToString();
+
+        if (weaponId == 2 && chargedTimerText != null)
+        {
+            chargedTimerText.gameObject.SetActive(true);
+            chargedTimerText.text = t;
+        }
+
+        if (weaponId == 3 && multiTimerText != null)
+        {
+            multiTimerText.gameObject.SetActive(true);
+            multiTimerText.text = t;
+        }
+    }
+
+    public void ClearWeaponTimers()
+    {
+        if (chargedTimerText != null) chargedTimerText.gameObject.SetActive(false);
+        if (multiTimerText != null) multiTimerText.gameObject.SetActive(false);
     }
 
     public void LockAllWeaponsHUD()

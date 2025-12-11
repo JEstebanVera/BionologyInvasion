@@ -8,7 +8,7 @@ public class JugadorController : MonoBehaviour
     public float maxX = 7f;
 
     [Header("Dash")]
-    public float dashSpeed = 15f;
+    public float dashSpeed = 30f;
     public float dashDuration = 0.6f;
     public float dashCooldown = 1f;
 

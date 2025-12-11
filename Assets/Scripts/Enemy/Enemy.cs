@@ -17,6 +17,11 @@ public class Enemy : MonoBehaviour
     public AudioClip hitSound;     //  Nuevo: sonido al recibir daño
     private AudioSource audioSource;
 
+    [Header("Efecto de Daño")]
+    public GameObject damageEffectPrefab;   // Prefab con partículas
+    private GameObject damageFXInstance;    // Instancia en escena
+
+
     [Header("Pickups")]
     public GameObject weaponPickupChargePrefab;
     public GameObject weaponPickupMultiplePrefab;
@@ -62,6 +67,14 @@ public class Enemy : MonoBehaviour
             GameObject fx = Instantiate(specialPickupEffectPrefab, transform.position, Quaternion.identity, transform);
             SafeDestroy.DestroyAfterSecondsSafe(this, fx, 10f);
         }
+
+        // --- Instancia FX de daño ---
+        if (damageEffectPrefab != null)
+        {
+            damageFXInstance = Instantiate(damageEffectPrefab, transform.position, Quaternion.identity, transform);
+            damageFXInstance.SetActive(false);
+        }
+
     }
 
     private void Update()
@@ -216,9 +229,20 @@ public class Enemy : MonoBehaviour
         if (hitSound != null)
             audioSource.PlayOneShot(hitSound);
 
+        // --- Activa partículas de daño por 1 segundo ---
+        if (damageFXInstance != null)
+            StartCoroutine(DamageEffectRoutine());
+
         currentHealth -= dmg;
         if (currentHealth <= 0)
             Die();
+    }
+
+    private IEnumerator DamageEffectRoutine()
+    {
+        damageFXInstance.SetActive(true);
+        yield return new WaitForSeconds(1f);
+        damageFXInstance.SetActive(false);
     }
 
     private void Die()
